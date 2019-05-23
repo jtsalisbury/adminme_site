@@ -1,5 +1,5 @@
 # adminme_site
-A website built to be used with AdminMe, a Garry's Mod administrative addon. 
+A website built to be used with AdminMe, a Garry's Mod administrative addon. Note: A work in progress!
 
 This site uses the publically available LuminoAdmin bootstrap template and the PHP SteamAuth plugin. 
 
