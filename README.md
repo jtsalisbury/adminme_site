@@ -1,6 +1,8 @@
 # adminme_site
 A website built to be used with AdminMe, a Garry's Mod administrative addon. Note: A work in progress!
 
+View screenshots of here: https://imgur.com/a/coOpzn6
+
 This site uses the publically available LuminoAdmin bootstrap template and the PHP SteamAuth plugin. 
 
 Features include viewing / editing bans, users, ranks, permissions, viewing logs, etc. Users are able to login via Steam. Permissions for the site are assigned via AdminMe and the steamid is checked against those for access.
