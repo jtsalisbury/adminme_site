@@ -29,7 +29,7 @@
 				<div class="panel-body">
 					<?php
 						if(!isset($_SESSION['steamid'])) {
-						    echo "<div style='margin: 30px auto; text-align: center;'>Welcome Guest! Please log in!";
+						    echo "<div style='margin: 30px auto; text-align: center;'>Welcome Guest! Please log in!<br />";
 						    loginButton();
 							echo "</div>";
 						}

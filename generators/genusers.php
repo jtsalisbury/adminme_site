@@ -1,32 +1,33 @@
 <?php
-	$skipCheck = true;
+
 	include("../steamauth/mysql.php");
 
-	$sql = "SELECT * FROM `users` ORDER BY rank DESC";
-	$res = $link->query($sql);
+
+
+	$stmt = $GLOBALS["link"]->prepare("SELECT * FROM `users` ORDER BY `rank` DESC");
+
+	$stmt->execute();
+
 	$users = array();
 
-	while ($row = $res->fetch_assoc()) {
+
+
+	while ($row = $stmt->fetch()) {
+
 		$steamid = $row["steamid"];
-		$name    = $row["name"];
-		$ranks   = $row["rank"];
 
-		$rankPretty = "";
-		$rankList = json_decode($ranks);
-		foreach ($rankList as $ran => $serv) {
-			$servPretty = "";
+		$name   = $row["name"];
 
-			foreach ($serv as $serv) {
-				$servPretty = $servPretty . $serv . ", ";
-			}
-			$servPretty = rtrim($servPretty, ", ");
+		$rank    = $row["rank"];
 
-			$rankPretty = $rankPretty . "<strong>" . $ran . "</strong> (" . $servPretty . "), ";
-		}
-		$rankPretty = rtrim($rankPretty, ", ");
 
-		$users[] = array("steamid" => $steamid, "name" => $name, "rank" => $rankPretty);
+
+		$users[] = array("steamid" => $steamid, "name" => $name, "rank" => $rank);
+
 	}
 
+
+
 	echo json_encode($users);
+
 ?>

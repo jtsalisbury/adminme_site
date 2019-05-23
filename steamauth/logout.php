@@ -1,7 +1,11 @@
 <?php
 
-header("Location: ../");
-session_start();
-unset($_SESSION['steamid']);
-unset($_SESSION['steam_uptodate']);
+	session_start();
+    session_unset();
+    session_destroy();
+    session_write_close();
+    setcookie(session_name(),'',0,'/');
+    session_regenerate_id(true);
+		
+	header("Location: ../");
 ?>

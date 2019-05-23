@@ -3,39 +3,7 @@
 	include("steamauth/userInfo.php");
 	include("steamauth/mysql.php");
 
-	$id = $_SESSION["steamid"];
-	if (isset($id)) {
-		$authserver = bcsub($id, '76561197960265728') & 1;
-		$authid = (bcsub($id, '76561197960265728')-$authserver)/2;
-		$id = mysql_escape_string("STEAM_0:$authserver:$authid");
-
-		$sql = "SELECT * FROM `users` WHERE `steamid` = '". $id ."'";
-		$res = mysql_query($sql, $link);
-
-		if (!$res or mysql_num_rows($res) == 0) { header("Location: steamauth/logout.php"); }
-		$row = mysql_fetch_assoc($res);
-		$rank = $row['rank'];
-
-		$sql = "SELECT * FROM `ranks` WHERE `rank` = '". $rank ."'";
-		$res = mysql_query($sql, $link);
-		if ($res && mysql_num_rows($res) == 1) {
-			$rows = mysql_fetch_assoc($res);
-
-			$perms = $rows[ 'perms' ];
-
-			$access = strpos($perms, '*');
-			$access2 = strpos($perms, 'website');
-
-			if ($access == NULL and $access != FALSE and $access2 == NULL) {
-				die($access == NULL);
-				header("Location: steamauth/logout.php");
-			}
-		} else {
-			header("Location: steamauth/logout.php");
-		}
-	} else {
-		header("Location: index.php");
-	}
+	checkLogin();
 ?>
 
 <!DOCTYPE html>
@@ -48,6 +16,7 @@
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <link href="css/datepicker3.css" rel="stylesheet">
 <link href="css/styles.css" rel="stylesheet">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <!--Icons-->
 <script src="js/lumino.glyphs.js"></script>
@@ -86,11 +55,12 @@
 				<li><a href="logs.php"><svg class="glyph stroked clipboard with paper"><use xlink:href="#stroked-clipboard-with-paper"/></svg> Logs</a></li>
 				<li><a href="keys.php"><svg class="glyph stroked key "><use xlink:href="#stroked-key"/></svg> Keys</a></li>
 				<li class='active'><a href="bans.php"><svg class="glyph stroked trash"><use xlink:href="#stroked-trash"/></svg> Bans</a></li>
-			<? } ?>
+				<li><a href="servers.php"><svg class="glyph stroked external hard drive"><use xlink:href="#stroked-external-hard-drive"/></svg> Servers</a></li>
+				<li><a href="warnings.php"><svg class="glyph stroked clipboard with paper"><use xlink:href="#stroked-clipboard-with-paper"/></svg> Warnings</a></li>
+			<?php } ?>
 
 			<li role="presentation" class="divider"></li>
 
-			<li><a href="public/ranklist.php"><svg class="glyph stroked notepad "><use xlink:href="#stroked-notepad"/></svg> Rank List</a></li>
 			<li><a href="public/userlist.php"><svg class="glyph stroked notepad "><use xlink:href="#stroked-notepad"/></svg> User List</a></li>
 			<li><a href="public/banlist.php"><svg class="glyph stroked notepad "><use xlink:href="#stroked-notepad"/></svg> Ban List</a></li>
 
@@ -113,26 +83,45 @@
 				<li class="active"> Bans</li>
 			</ol>
 		</div><!--/.row-->
-										
+
 		<div class="row">
-			
 			<div class="col-lg-12">
 				<div class="panel panel-default">
 					<div class="panel-heading">View Bans</div>
 					<div class="panel-body">
-						
+						<table data-toggle="table" data-url="generators/genbans.php"  data-show-refresh="true" data-show-toggle="true" data-show-columns="true" data-search="true" data-select-item-name="toolbar1" data-pagination="true">
+						    <thead>
+						    <tr>
+						        <th data-field="steamid" data-sortable="true" >SteamID</th>
+						        <th data-field="name" data-sortable="true" >Banned Nick</th>
+						        <th data-field="reason" data-sortable="true">Reason</th>
+						        <th data-field="time"  data-sortable="true">Banned At</th>
+						    	<th data-field="active" data-sortable="true">Active</th>
+						    	<th data-field="moreOptions" data-sortable="false"></th>
+
+						    </tr>
+						    </thead>
+						</table>
 					</div>
 				</div>
 			</div>
-			
+		</div><!--/.row-->	
 
-		</div><!--/.row-->				
 		<div class="row">
 			
 			<div class="col-lg-12">
 				<div class="panel panel-default">
 					<div class="panel-heading">Add Ban</div>
 					<div class="panel-body">
+
+						<form class='newBan' style='width: 100%; float: left;'>
+							<input class='newBanID form-control' style='width: 20%; float: left; margin-left: 10px;' type='text' placeholder='steamid'>
+							<input class='newBanName form-control' style='width: 20%; float: left; margin-left: 10px;' type='text' placeholder='username'>
+							<input class='newBanReason form-control' style='width: 20%; float: left; margin-left: 10px;' type='text' placeholder='reason' >
+							<input class='newBanUntilDate form-control' style='width: 20%; float: left; margin-left: 10px;' type='datetime-local'>
+
+							<input class='submitNewBan btn btn-primary' type='submit' value='Add Ban' style='margin-left: 10px; float: left;'>
+						</form>
 						
 					</div>
 				</div>
@@ -141,10 +130,22 @@
 
 		</div><!--/.row-->		
 
-
 	</div>	<!--/.main-->
 
+	<div id="moreInfoModal" title="View More">
+		<p id="bannedName"></p>
+		<p id="bannerName"></p>
+
+		<p id="bannedTimestamp"></p>
+		<p id="bannedReason"></p>
+
+		<div id="banButtons">
+
+		</div>
+	</div>
+
 	<script src="js/jquery-1.11.1.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="js/bootstrap.min.js"></script>
 	<script src="js/chart.min.js"></script>
 	<script src="js/chart-data.js"></script>
@@ -168,6 +169,90 @@
 		})
 		$(window).on('resize', function () {
 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
+		})
+
+		$( "#moreInfoModal" ).dialog({
+			autoOpen: false,
+			autoResize: true,
+		});
+
+		function viewMore(id) {
+	        $.ajax({
+	            url: 'updaters/pullBanInfo.php',
+	            type: 'POST',
+	            data: { 
+	                    "id": id,
+	                },
+	            success:function(data) {
+	                var arr = jQuery.parseJSON(data);
+
+	                $("#bannedName").html("<b>Banned Name:</b> " + arr["banned_name"] + "(" + arr["banned_steamid"] + ")");
+	                $("#bannerName").html("<b>Banner's Name:</b> " + arr["banner_name"] + "(" + arr["banner_steamid"] + ")");
+	                $("#bannedTimestamp").html("<b>Active? </b> " + (Number(arr["ban_active"]) == 1 ? "Yes" : "No") + "<br><b>Banned At:</b> " + arr["banned_timestamp"] + "<br><b>Unbanned At: </b>" + arr["unbanned_timestamp"]);
+	                $("#bannedReason").html("<b>Reason: </b>" + arr["banned_reason"]);
+
+	                $("#banButtons").html(
+	                	"<input onclick='deleteBan(" + id + ");' class='btn btn-primary' type='submit' value='Delete Ban'>"
+	                );
+
+	                $("#moreInfoModal").dialog("open");
+	            },
+	            error:function(msg) {
+	            }
+	        });
+		}
+
+		function deleteBan(id) {
+	        $.ajax({
+	            url: 'updaters/deleteban.php',
+	            type: 'POST',
+	            data: { 
+	                    "id": id,
+	                },
+	            success:function(data) {
+	                alert(data);
+	                document.location.href = "bans.php";
+	            },
+	            error:function(msg) {
+	            }
+	        });
+		    
+		}
+
+		$('.newBan').on("submit", function(e){
+			e.preventDefault();
+
+	        var name = $(".newBanName").val();
+	        var id = $(".newBanID").val();
+			var reason = $(".newBanReason").val();
+			var date = $(".newBanUntilDate").val();
+
+	        if (id.length < 10) {
+	            alert("Please enter a valid SteamID!");
+	        } else if (name.length < 1) {
+	        	alert("Please enter in a name of more than 1 character!");
+	        } else if (reason.length < 1) {
+	        	alert("Please enter in a reason of more than 1 character!");
+	        } else if (date.length < 16) {
+	        	alert("Please enter in a full date & time!");
+		    } else {
+
+		        $.ajax({
+		            url: 'updaters/addban.php',
+		            type: 'POST',
+		            data: { "steamid": id,
+		                    "name": name,
+		                    "reason": reason,
+		                    "date": date
+		                },
+		            success:function(data) {
+		            	alert(data);
+		                document.location.href = "bans.php";
+		            },
+		            error:function(msg) {
+		            }
+		        });
+		    }
 		})
 	</script>	
 </body>

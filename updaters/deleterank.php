@@ -1,27 +1,18 @@
 <?php
 	include("../steamauth/mysql.php");
 	include("../steamauth/steamauth.php");
-	include("../steamauth/userInfo.php");
+	
+	checkLogin();
 
 	$rank = $_POST["rank"];
-
-	$rank = $link->real_escape_string($rank);
-
-	$sql = "SELECT * FROM `ranks` WHERE `rank` = '".$rank."'";
-	$res = $link->query($sql);
-	if (!$res) {
-		die("Error!");
-	}
-	if ($res->num_rows == 0) {
-		die($rank);
+	
+	$stmt = $GLOBALS["link"]->prepare("DELETE FROM `ranks` WHERE `rank` = :rank");
+	$stmt->execute(array(":rank" => $rank));
+	if (count($stmt->fetch()) == 0) {
+		die("No rank found with that ID!");
+	} else {
+		die("success");
 	}
 
-	$sql = "DELETE FROM `ranks` WHERE `rank` = '".$rank."' ";
-
-	$res = $link->query($sql);
-	if (!$res) {
-		die("Error!");
-	}
-
-	echo "success";
+	echo "fail";
 ?>

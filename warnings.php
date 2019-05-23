@@ -16,6 +16,7 @@
 <link href="css/bootstrap.min.css" rel="stylesheet">
 <link href="css/datepicker3.css" rel="stylesheet">
 <link href="css/styles.css" rel="stylesheet">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
 
 <!--Icons-->
 <script src="js/lumino.glyphs.js"></script>
@@ -52,10 +53,10 @@
 				<li><a href="ranks.php"><svg class="glyph stroked star"><use xlink:href="#stroked-star"/></svg> Ranks</a></li>
 				<li><a href="users.php"><svg class="glyph stroked female user"><use xlink:href="#stroked-female-user"/></svg> Users</a></li>
 				<li><a href="logs.php"><svg class="glyph stroked clipboard with paper"><use xlink:href="#stroked-clipboard-with-paper"/></svg> Logs</a></li>
-				<li class='active'><a href="keys.php"><svg class="glyph stroked key "><use xlink:href="#stroked-key"/></svg> Keys</a></li>
+				<li><a href="keys.php"><svg class="glyph stroked key "><use xlink:href="#stroked-key"/></svg> Keys</a></li>
 				<li><a href="bans.php"><svg class="glyph stroked trash"><use xlink:href="#stroked-trash"/></svg> Bans</a></li>
 				<li><a href="servers.php"><svg class="glyph stroked external hard drive"><use xlink:href="#stroked-external-hard-drive"/></svg> Servers</a></li>
-				<li><a href="warnings.php"><svg class="glyph stroked clipboard with paper"><use xlink:href="#stroked-clipboard-with-paper"/></svg> Warnings</a></li>
+				<li class='active'><a href="warnings.php"><svg class="glyph stroked clipboard with paper"><use xlink:href="#stroked-clipboard-with-paper"/></svg> Warnings</a></li>
 			<?php } ?>
 
 			<li role="presentation" class="divider"></li>
@@ -79,34 +80,34 @@
 		<div class="row">
 			<ol class="breadcrumb">
 				<li><a href="#"><svg class="glyph stroked home"><use xlink:href="#stroked-home"></use></svg></a></li>
-				<li class="active"> Keys</li>
+				<li class="active"> Warnings</li>
 			</ol>
 		</div><!--/.row-->
 										
 		<div class="row">
-			
 			<div class="col-lg-12">
 				<div class="panel panel-default">
-					<div class="panel-heading">All Keys</div>
+					<div class="panel-heading">All Warnings</div>
 					<div class="panel-body">
 						<table class='table'>
 						    <thead>
 						    <tr>
-						        <th data-field="id" data-sortable="true">Key ID</th>
-						        <th data-field="key"  data-sortable="true">Key</th>
-						        <th data-field="rank" data-sortable="true">Rank</th>
-						        <th data-field="rank" data-sortable="true">Redeemd By</th>
+						        <th data-field="id" data-sortable="true">ID</th>
+						        <th data-field="name"  data-sortable="true">Name</th>
+						        <th data-field="sid" data-sortable="true">SteamID</th>
+						        <th data-field="count" data-sortable="true">Warning Count</th>
+						        <th></th>
 						    </tr>
 						    </thead>
 
 						    <?php
-						    	$sql = $GLOBALS["link"]->query("SELECT * FROM `keys`");
+						    	$sql = $GLOBALS["link"]->query("SELECT * FROM `warnings`");
 
 						    	while ($row = $sql->fetch()) {
-						    		echo "<tr><td>".$row['id']."</td><td>".$row["key"]."</td><td>".$row["rank"]."</td><td>".$row["redeemed_by"]."</td><td>
+						    		echo "<tr><td>".$row['id']."</td><td>".$row["name"]."</td><td>". $row["steamid"] ."</td><td>". $row["warnings"] ."</td><td style='width: 15%'>
 			
-										<form keyid='".$row['id']."' class='deleteKeyForm' style='float: left; width: 100%;'>
-											<input class='deleteKey btn btn-primary' type='submit' value='Delete' style='float: left; margin-left: 10px'>
+										<form id='".$row['id']."' wdata='". $row["warningsData"] ."' name='". $row["name"] ."' steamid='". $row["steamid"] ."' class='updatePerms' style='float: left; width: 100%;'>
+											<input class='viewMore btn btn-primary' type='submit' value='View' style='float: left; margin-left: 10px'>
 										</form>
 
 									</td></tr>";
@@ -116,32 +117,20 @@
 					</div>
 				</div>
 			</div>
-			
-
-		</div><!--/.row-->	
-
-		<div class="row">
-			
-			<div class="col-lg-12">
-				<div class="panel panel-default">
-					<div class="panel-heading">Generate New Key</div>
-					<div class="panel-body">
-						<form class='newKey' style='width: 100%; float: left;'>
-							<input class='keyRank form-control' style='width: 25%; float: left; margin-left: 10px;' type='text' placeholder='rank'>
-
-
-							<input class='createNewKey btn btn-primary' type='submit' value='Generate' style='margin-left: 10px; float: left;'>
-						</form>
-					</div>
-				</div>
-			</div>
-			
 
 		</div><!--/.row-->				
 		
 	</div>	<!--/.main-->
 
+	<div id="moreInfoModal" title="View More">
+		<p id="user"></p>
+		<p id="warningInfo"></p>
+
+		<input class='warningDelete btn btn-primary' id="" type='submit' value='Delete All' style='float: left; margin-left: 10px'>
+	</div>
+
 	<script src="js/jquery-1.11.1.min.js"></script>
+	<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 	<script src="js/bootstrap.min.js"></script>
 	<script src="js/chart.min.js"></script>
 	<script src="js/chart-data.js"></script>
@@ -150,56 +139,11 @@
 	<script src="js/bootstrap-datepicker.js"></script>
 	<script src="js/bootstrap-table.js"></script>
 	<script>
-		$(document).ready(function() {
-			$('.createNewKey').click(function(e){
-				e.preventDefault();
+		$( "#moreInfoModal" ).dialog({
+			autoOpen: false,
+			autoResize: true,
+		});
 
-				var rank = $(".keyRank").val();
-
-		        if (rank.length === 0) {
-		     		alert("Please set a rank!");
-			    } else {
-
-			        $.ajax({
-			            url: 'updaters/newkey.php',
-			            type: 'POST',
-			            data: { 
-			                    "rank": rank,
-			                },
-			            success:function(data) {
-			                alert("Key added!");
-			                document.location.href = "keys.php";
-			            },
-			            error:function(msg) {
-			            }
-			        });
-			    }
-			})
-
-			$('.deleteKey').click(function(e){
-				e.preventDefault();
-
-				var form = $(this).parent("form");
-				var id   = form.attr("keyid");
-
-		        $.ajax({
-		            url: 'updaters/deletekey.php',
-		            type: 'POST',
-		            data: { 
-		                    "id": id,
-		                },
-		            success:function(data) {
-		                alert(data);
-		                document.location.href = "keys.php";
-		            },
-		            error:function(msg) {
-		            }
-		        });
-			    
-			})
-		})
-	</script>
-	<script>
 		$('#calendar').datepicker({
 		});
 
@@ -216,6 +160,49 @@
 		$(window).on('resize', function () {
 		  if ($(window).width() <= 767) $('#sidebar-collapse').collapse('hide')
 		})
+
+		$(".viewMore").click(function(e) {
+			e.preventDefault();
+
+			var form = $(this).parent("form");
+			var data = form.attr("wdata");
+			var id = form.attr("id");
+			var name = form.attr("name");
+			var sid = form.attr("steamid");
+
+			var arr = jQuery.parseJSON(data);
+
+			var str = "";
+			arr.forEach(function(val, ind, arr) {
+
+				var date = new Date(val["timestamp"] * 1000);
+				var toAppend = "<b>Admin: </b>" + val["admin"] + "<br><b>Timestamp: </b>" + date.toDateString() + " at " + date.toTimeString() + "<br><b>Reason: </b>" + val["reason"] + "<br><br>";
+				str = str + toAppend;
+			})
+
+			$("#warningInfo").html(str);
+			$("#user").html("<b>Player: </b>" + name + " (" + sid + ")");
+
+			$(".warningDelete").attr("id", id);
+			$("#moreInfoModal").dialog("open");
+		})
+
+		$('.warningDelete').click(function(e) {
+			e.preventDefault();
+
+			var id = $(this).attr("id");
+			$.ajax({
+				url: "updaters/deletewarnings.php",
+				type: "POST",
+				data: {"id": id},
+				success:function(data) {
+					document.location.href = "warnings.php";
+				},
+				error:function(msg) {
+				}
+			})
+			
+		});	
 	</script>	
 </body>
 

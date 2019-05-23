@@ -1,42 +1,31 @@
 <?php
-  $skipCheck = true;
-  include("../steamauth/mysql.php");
+	include("../steamauth/mysql.php");
 
-  $sql = "SELECT * FROM `bans` ORDER BY id DESC";
-  $res = $link->query($sql);
+	$stmt = $GLOBALS["link"]->prepare("SELECT * FROM `bans` ORDER BY banned_timestamp DESC");
+	$stmt->execute();
 
-  $bans = array();
+	$events = array();
+	$evs = array();
 
-  $dto = new DateTime();
-  $currentDT = new DateTime();
+	while ($row = $stmt->fetch()) {
+		$steamid = $row["banned_steamid"];
+		$reason  = $row["banned_reason"];
+		
+		$time    = date("m/d/Y H:i:s", $row["banned_timestamp"]);
 
+		$active  = $row["ban_active"];
+		if ($active == 1) {
+			$active = "Yes";
+		} else {
+			$active = "No";
+		}
+		$bannedName = $row["banned_name"];
 
-  while ($row = $res->fetch_assoc()) {
-    $bID = $row["banned_steamid"];
-    $bNm = $row["banned_name"];
-    $bAt = $dto->setTimestamp($row["banned_timestamp"]);
-    $bReas = $row["banned_reason"];
-    $bLen  = $row["banned_time"];
+		$events[] = array("steamid" => $steamid, "reason" => $reason, "time" => $time, "active" => $active, "name" => $bannedName, "moreOptions" =>
+			"<input onclick='viewMore(".$row["id"].");' class='viewMore btn btn-primary' type='submit' value='View More' style='float: left; margin-left: 10px'>");
+	}
 
-    $bannerID = $row["banner_steamid"];
-    $bannerNam = $row["banner_name"];
+	$evs['events'] = $events;
 
-    $dio = new DateInterval("PT". $bLen. "S");
-
-    $bannedAt = $dto->format("m/d/Y h:i:s");
-    $unbannedAt = $dto->add($dio)->format("m/d/Y h:i:s");
-
-    $active = $currentDT >= $dto ? "No" : "Yes";
-
-    $bans[] = array(
-      "bName" => $bNm . " (". $bID .")",
-      "bAt" => $bannedAt,
-      "bReason" => $bReas,
-      "bUnAt" => $unbannedAt,
-      "bannerName" => $bannerNam . " (". $bannerID .")",
-      "active" => $active,
-    );
-  }
-
-  echo json_encode($bans);
+	echo json_encode($events);
 ?>

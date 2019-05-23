@@ -1,26 +1,21 @@
 <?php
-
-	$skipCheck = true;
 	include("../steamauth/mysql.php");
 
-	$sql = "SELECT * FROM `logs` ORDER BY id DESC LIMIT 200";
-	$res = $link->query($sql);
+	$stmt = $GLOBALS["link"]->prepare("SELECT * FROM `logs` ORDER BY timestamp DESC LIMIT 200");
+	$stmt->execute();
+
 	$events = array();
 	$evs = array();
 
-	$dto = new DateTime();
-
-	while ($row = $res->fetch_assoc()) {
+	while ($row = $stmt->fetch()) {
 		$steamid = $row["steamid"];
 		$event   = $row["event"];
-		$time    = $dto->setTimestamp($row["timestamp"]);
+		$time    = gmdate("m/d/Y H:i:s", $row["timestamp"]);
 
-		$events[] = array("steamid" => $steamid, "event" => $event, "time" => $time->format("m/d/Y h:i:s"));
+		$events[] = array("steamid" => $steamid, "event" => $event, "time" => $time);
 	}
 
 	$evs['events'] = $events;
 
 	echo json_encode($events);
-
-
 ?>

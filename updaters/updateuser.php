@@ -3,29 +3,29 @@
 	include("../steamauth/steamauth.php");
 	include("../steamauth/userInfo.php");
 
+	checkLogin();
+
+	$id = $_POST["steamid"];
 	$rank = $_POST["rank"];
-	$id   = $_POST["steamid"];
+	$server = $_POST["server"];
 
-	$rank = $link->real_escape_string($rank);
-	$id   = $link->real_escape_string($id);
-
-	$sql = "SELECT * FROM `users` WHERE `steamid` = '".$id."'";
-	$res = $link->query($sql);
-	if (!$res) {
-		die("Error!");
-	}
-	if ($res->num_rows == 0) {
-		die("No user with that ID!");
+	$stmt = $GLOBALS["link"]->prepare("SELECT * FROM `users` WHERE `steamid` = :steamid");
+	$stmt->execute(array(":steamid" => $id));
+	if (count($stmt->fetch()) == 0) {
+		die("There is no user with that ID!");
 	}
 
-	$sql = "UPDATE `users` SET `rank` = '".$rank."' WHERE `steamid` = '".$id."' ";
+	$stmt;
 	if ($rank == "user") {
-		$sql = "DELETE FROM `users` WHERE `steamid` = '".$id."'";
+		$stmt = $GLOBALS["link"]->prepare("DELETE FROM `users` WHERE `steamid` = :id");
+		$stmt->execute(array(":id" => $id));
+	} else {
+		$stmt = $GLOBALS["link"]->prepare("UPDATE `users` SET `rank` = :rank, `server` = :server WHERE `steamid` = :id");
+		$stmt->execute(array(":rank" => $rank, ":id" => $id, ":server" => $server));
 	}
 
-	$res = $link->query($sql);
-	if (!$res) {
-		die("Error!");
+	if (count($stmt->fetch()) == 0) {
+		die("fail");
 	}
 
 	echo "success";
